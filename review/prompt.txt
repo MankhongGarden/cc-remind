@@ -1,0 +1,17 @@
+[Headless backlog review requested by the user. Nobody will answer questions during this run.]
+
+This project has open items in `cc-remind`, a reminder inbox shared by all Claude Code sessions (one item = one task). The user wants this project's own conversation to review them and say which ones still need doing.
+
+1. Run `cc-remind list --notes` to see the open items for this project, and `cc-remind show <id>` for details. You may use the Bash or PowerShell tool, but only for `cc-remind`, `git status`, `git log`, `git remote` and `ls`.
+2. Go through the items one by one. Use what you know from this conversation, CLAUDE.md, memory, the project files and git (read-only) to decide:
+   - Already done, with evidence -> `cc-remind done <id> "<short evidence>"`
+   - No longer needed (superseded, plan dropped, premise no longer true), with evidence -> `cc-remind done <id> --dropped "<short reason>"`
+   - Still needed -> leave it open. If its priority or due date is wrong, fix it with `cc-remind edit <id> --pr hi|mid|lo` or `--due`.
+   - Not sure, or it is a decision only the user can make -> do NOT close it. List it as a question in your report.
+3. Do not edit files, deploy, call external APIs or change anything except through `cc-remind`. Never close an item that needs the user's decision by guessing.
+
+Final answer (at most 30 lines):
+- Closed as done: id - item - evidence (one line each)
+- Closed as dropped: id - item - reason
+- Kept open: count (+ any priority/due changes)
+- Questions for the user: id - a question that can be answered briefly (one line each)

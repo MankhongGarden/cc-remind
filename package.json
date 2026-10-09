@@ -1,0 +1,11 @@
+{
+  "name": "cc-remind",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A durable reminder inbox shared by every Claude Code session on your machine, with a Windows desktop widget.",
+  "type": "module",
+  "bin": { "cc-remind": "cc.mjs" },
+  "engines": { "node": ">=18" },
+  "scripts": { "test": "node --test test/cc.test.mjs" },
+  "license": "MIT"
+}

@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>cc-remind</title>
+<style>
+:root{--bg:#1f1f23;--bg2:#27272c;--line:rgba(255,255,255,.08);--tx:#ececf1;--mut:#9a9aa6;--dim:#6b6b76;--acc:#d97757;--live:#3fb950;--pend:#e3a008;--done:#5c5c66}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:"Segoe UI","Leelawadee UI",Tahoma,sans-serif;font-size:13px;overflow:hidden;user-select:none}
+.w{display:flex;flex-direction:column;height:100%;border:1px solid var(--line);position:relative}
+.hd{display:flex;align-items:center;gap:8px;padding:10px 8px 8px 12px;app-region:drag}
+.hd button{app-region:no-drag}
+.logo{width:16px;height:16px;border-radius:4px;background:var(--acc);display:grid;place-items:center;color:#fff;font-size:11px;font-weight:700;flex:none}
+.ttl{font-weight:600;white-space:nowrap}
+.sum{display:flex;gap:10px;margin-left:auto;font-size:11.5px;color:var(--mut);white-space:nowrap}
+.sum b{font-weight:600;color:var(--tx)}
+.ib{width:24px;height:24px;border:0;border-radius:5px;background:transparent;color:var(--mut);cursor:pointer;font-size:13px;flex:none}
+.ib:hover{background:rgba(255,255,255,.08);color:var(--tx)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;display:inline-block}
+.dot.live{background:var(--live);box-shadow:0 0 0 3px rgba(63,185,80,.18)}
+.dot.pend{background:var(--pend)}
+.dot.done{border:1.5px solid var(--done)}
+.tabs{display:flex;margin:0 12px 6px;background:rgba(255,255,255,.05);border-radius:7px;padding:3px}
+.tab{flex:1;text-align:center;padding:5px 0;border-radius:5px;color:var(--mut);cursor:pointer;font-size:12.5px}
+.tab:hover{color:var(--tx)}
+.tab.on{background:var(--bg2);color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.cnt{display:inline-block;min-width:16px;padding:0 4px;border-radius:8px;background:rgba(255,255,255,.12);font-size:10.5px;margin-left:3px;text-align:center}
+.cnt.red{background:#d9453a;color:#fff}
+.list{flex:1;overflow:auto;padding:2px 6px 6px}
+.list::-webkit-scrollbar{width:8px}.list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px}
+.row{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;cursor:pointer}
+.row:hover{background:rgba(255,255,255,.06)}
+.m{min-width:0;flex:1}
+.t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row.done .t{color:#b9b9c3}
+.s{font-size:11.5px;color:var(--dim);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s .pj{color:var(--mut)}
+.act{font-size:11px;color:var(--acc);opacity:0;white-space:nowrap}
+.row:hover .act,.td:hover>.act{opacity:1}
+.cmp{font-size:10.5px;color:var(--dim);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:4px}
+.grp{margin:0 0 2px}
+.gh{display:flex;align-items:center;gap:6px;padding:6px 8px 3px;cursor:pointer;border-radius:6px}
+.gh:hover{background:rgba(255,255,255,.04)}
+.gh .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto;max-width:170px}
+.gh .c{font-size:11px;color:var(--dim)}
+.gh .when{margin-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.gh .sp{flex:1 1 0}
+.gh .hide{opacity:0}.grp:hover .gh .hide{opacity:1}
+.chev{display:inline-block;width:12px;color:var(--mut);transition:transform .15s;font-size:14px;flex:none}
+.grp.open>.gh .chev{transform:rotate(90deg)}
+.grp>.body{display:none}.grp.open>.body{display:block}
+.bd{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--mut);margin-left:4px;white-space:nowrap;flex:none}
+.bd .dot{width:7px;height:7px;box-shadow:none}
+.nb{border:1px solid rgba(217,119,87,.5);background:rgba(217,119,87,.1);color:#f0a68a;border-radius:5px;font:inherit;font-size:11.5px;padding:2px 8px;cursor:pointer;white-space:nowrap;flex:none}
+.nb:hover{background:rgba(217,119,87,.22)}
+.ft{border-top:1px solid var(--line);padding:8px 12px}
+.pb{width:100%;border:1px dashed rgba(255,255,255,.18);background:transparent;color:var(--tx);border-radius:6px;padding:7px;font:inherit;cursor:pointer}
+.pb:hover{border-color:var(--acc);color:#f0a68a}
+.flt{display:flex;gap:6px;margin:0 12px 6px}
+.flt span{font-size:11.5px;color:var(--mut);border:1px solid var(--line);border-radius:12px;padding:2px 9px;cursor:pointer}
+.flt span.on{color:var(--tx);border-color:rgba(255,255,255,.3)}
+.td{display:flex;align-items:flex-start;gap:9px;padding:7px 8px 7px 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;flex-wrap:wrap}
+.td:hover{background:rgba(255,255,255,.06)}
+.td.pr-hi{border-left-color:#d9453a}.td.pr-mid{border-left-color:var(--pend)}.td.pr-lo{border-left-color:#4b5563}
+.td.isover{background:rgba(217,69,58,.09)}
+.td .t2{line-height:1.35;word-break:break-word}
+.td .s{font-size:11px;margin-top:3px;white-space:normal;line-height:1.7}
+.td>.act{margin-top:2px}
+.cb{width:15px;height:15px;border:1.5px solid #6b6b76;border-radius:4px;flex:none;margin-top:2px;display:grid;place-items:center;font-size:10px;color:#fff}
+.cb:hover{border-color:var(--acc)}
+.cb.on{background:#3a7d44;border-color:#3a7d44}
+.td.done{border-left-color:transparent}.td.done .t2{color:var(--dim);text-decoration:line-through}
+.chip{font-size:10.5px;border-radius:4px;padding:0 5px;line-height:16px;margin-right:5px;display:inline-block}
+.chip.to{background:rgba(88,166,255,.14);color:#8cc2ff}
+.chip.due{background:rgba(227,160,8,.14);color:#f1c453}
+.chip.over{background:#d9453a;color:#fff}
+.chip.warn{background:rgba(255,255,255,.1);color:#e6c07b}
+.det{flex:0 0 calc(100% - 24px);min-width:0;margin:6px 0 2px 24px;font-size:12px;color:#c9c9d1;cursor:default;overflow-wrap:anywhere;user-select:text}
+.det .note{white-space:pre-wrap;margin-bottom:6px;line-height:1.45}
+.det .meta{font-size:11px;color:var(--dim);line-height:1.6}
+.det .btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.det button{background:#33333a;color:var(--tx);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:11.5px;padding:3px 8px;cursor:pointer}
+.det button:hover{border-color:var(--acc)}
+.empty{color:var(--dim);text-align:center;padding:30px 10px;line-height:1.7}
+.link{color:var(--mut);font-size:11.5px;padding:6px 8px;cursor:pointer}
+.link:hover{color:var(--tx)}
+.ov{position:absolute;inset:0;background:rgba(10,10,12,.6);display:flex;align-items:center;justify-content:center;padding:18px}
+.dlg{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:14px}
+.dlg h3{margin:0 0 12px;font-size:14px}
+.lb{font-size:11.5px;color:var(--mut);margin:10px 0 5px}
+.in{width:100%;background:#1b1b1f;border:1px solid rgba(217,119,87,.6);border-radius:6px;color:var(--tx);padding:7px 9px;font:inherit;outline:none;user-select:text}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg span{border:1px solid var(--line);border-radius:6px;padding:5px 9px;color:var(--mut);cursor:pointer;font-size:12px}
+.seg span.on{border-color:var(--acc);color:var(--tx);background:rgba(217,119,87,.12)}
+.path{font-size:11px;color:var(--dim);margin-top:10px;word-break:break-all;font-family:Consolas,monospace}
+.err{color:#ff8a80;font-size:12px;margin-top:8px}
+.dbtn{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.b1{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
+.b1:disabled{opacity:.5;cursor:default}
+.b2{background:transparent;color:var(--mut);border:1px solid var(--line);border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
+.msg{position:absolute;left:12px;right:12px;bottom:56px;background:#33333a;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+</style>
+</head>
+<body>
+<div class="w" id="app"></div>
+<script>
+const L = {
+  en: {
+    live: 'live', pend: 'unfinished', recent: 'Recent', byProj: 'Projects', todo: 'Inbox',
+    sw: 'Switch to window ›', resume: 'Resume ›', newChat: '+ New chat', newProj: '+ New project',
+    noTitle: '(untitled)', all: 'All', me: 'For you', fwd: 'For projects', doneH: 'Done',
+    det: 'Details ›', refresh: 'Refresh', hideWin: 'Hide (reopen from the tray icon)', noHistory: 'No sessions yet',
+    flagged: 'Reminders', unhide: 'Unhide', hideProj: 'Hide this project', hideHidden: 'Hide hidden projects', showHidden: n => `Show hidden projects (${n})`,
+    orphan: 'source chat has ended', stale: 'still relevant?', markDone: 'Done', from: 'From', chat: 'Chat', added: 'Added', due: 'Due', to: 'For', ref: 'Ref', id: 'Id',
+    openSrc: 'Open source chat', newIn: n => `New chat in ${n}`, snooze1h: 'Snooze 1 h', snoozeTmr: 'Tomorrow 9:00', stillValid: 'Still relevant', drop: 'Drop',
+    reopen: 'Reopen', dropped: 'Dropped', closedBy: 'Closed by the chat in ', byYou: 'Checked by you', nothing: 'Nothing open', doneCount: n => `${n} items · last 30 days`,
+    newProjT: 'New project', projName: 'Project name', example: 'e.g. my-new-app', folder: 'Folder', cancel: 'Cancel', create: 'Create and start a chat', created: 'Created, opening the first chat',
+    justNow: 'just now', minAgo: n => `${n} min ago`, hAgo: n => `${n} h ago`, yesterday: 'yesterday', dAgo: n => `${n} days ago`,
+    overdue: 'overdue', overH: n => `overdue ${n} h`, overD: n => `overdue ${n} d`, today: 'today', tomorrow: 'tomorrow',
+    days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  },
+  th: {
+    live: 'เปิดอยู่', pend: 'ค้าง', recent: 'ล่าสุด', byProj: 'ตาม Project', todo: 'ฝากไว้',
+    sw: 'สลับไปหน้าต่าง ›', resume: 'เปิดต่อ ›', newChat: '+ แชทใหม่', newProj: '+ สร้าง Project ใหม่',
+    noTitle: '(ไม่มีชื่อ)', all: 'ทั้งหมด', me: 'คุณทำ', fwd: 'ส่งต่อ project', doneH: 'ทำแล้ว',
+    det: 'ดูรายละเอียด ›', refresh: 'รีเฟรช', hideWin: 'ซ่อน (เปิดใหม่จาก icon ที่ tray)', noHistory: 'ยังไม่มีประวัติ',
+    flagged: 'เรื่องที่ฝากไว้', unhide: 'เลิกซ่อน', hideProj: 'ซ่อน project นี้', hideHidden: 'ซ่อน project ที่ซ่อนไว้', showHidden: n => `แสดง project ที่ซ่อนไว้ (${n})`,
+    orphan: 'แชทต้นทางปิดไปแล้ว', stale: 'ยังจริงอยู่ไหม?', markDone: 'ทำแล้ว', from: 'จาก', chat: 'แชท', added: 'ฝากเมื่อ', due: 'กำหนด', to: 'ฝากถึง', ref: 'อ้างอิง', id: 'รหัส',
+    openSrc: 'เปิดแชทต้นทาง', newIn: n => `เปิดแชทใหม่ใน ${n}`, snooze1h: 'เลื่อน 1 ชม.', snoozeTmr: 'พรุ่งนี้ 9:00', stillValid: 'ยังจริงอยู่', drop: 'ไม่ทำแล้ว',
+    reopen: 'เปิดกลับมา', dropped: 'ยกเลิก (ไม่ทำแล้ว)', closedBy: 'ปิดโดยแชท ', byYou: 'คุณติ๊ก', nothing: 'ไม่มีเรื่องค้าง', doneCount: n => `${n} เรื่อง · 30 วันล่าสุด`,
+    newProjT: 'สร้าง Project ใหม่', projName: 'ชื่อ project', example: 'เช่น my-new-app', folder: 'หมวด', cancel: 'ยกเลิก', create: 'สร้างและเริ่มแชท', created: 'สร้างแล้ว กำลังเปิดแชทแรก',
+    justNow: 'เมื่อกี้', minAgo: n => `${n} นาทีที่แล้ว`, hAgo: n => `${n} ชม.ที่แล้ว`, yesterday: 'เมื่อวาน', dAgo: n => `${n} วันที่แล้ว`,
+    overdue: 'เลยกำหนดแล้ว', overH: n => `เลยกำหนด ${n} ชม.`, overD: n => `เลยกำหนด ${n} วัน`, today: 'วันนี้', tomorrow: 'พรุ่งนี้',
+    days: ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'], months: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
+  },
+};
+const host = window.chrome && window.chrome.webview;
+const send = m => host ? host.postMessage(m) : console.log('send', m);
+
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v === null ? d : v; } catch { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const S = { tab: load('tab', 0), filter: load('filter', 0), hidden: load('hidden', []), open: load('open', {}), showHidden: false, expanded: null, doneOpen: false, dialog: null, msg: null, data: { sessions: [], items: [], projectRoots: [] } };
+let T = L.en;
+
+const leaf = p => (p || '').replace(/[\\/]+$/, '').split(/[\\/]/).pop();
+const norm = p => (p || '').toLowerCase().replace(/[\\/]+$/, '');
+const sep = p => (p || '').includes('/') && !(p || '').includes('\\') ? '/' : '\\';
+const st = s => s.live ? 'live' : s.closed ? 'done' : 'pend';
+const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const roots = () => Array.isArray(S.data.projectRoots) ? S.data.projectRoots : [];
+function ago(t) {
+  const m = Math.round((Date.now() - new Date(t)) / 60000);
+  if (m < 60) return m <= 1 ? T.justNow : T.minAgo(m);
+  const h = Math.round(m / 60); if (h < 24) return T.hAgo(h);
+  const d = Math.round(h / 24); return d === 1 ? T.yesterday : T.dAgo(d);
+}
+const WD = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+let TZF = null, TZK = '-';
+function zp(d) {
+  const tz = S.data.timeZone || '';
+  const opts = { hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', weekday: 'short' };
+  if (TZK !== tz) { try { TZF = new Intl.DateTimeFormat('en-US', tz ? { ...opts, timeZone: tz } : opts); } catch { TZF = new Intl.DateTimeFormat('en-US', opts); } TZK = tz; }
+  const p = {}; for (const x of TZF.formatToParts(d)) p[x.type] = x.value;
+  return { y: +p.year, mo: +p.month, d: +p.day, h: +p.hour % 24, mi: +p.minute, wd: WD[p.weekday] };
+}
+const dayNo = p => Date.UTC(p.y, p.mo - 1, p.d) / 86400000;
+const hm = d => { const p = zp(d); return String(p.h).padStart(2, '0') + ':' + String(p.mi).padStart(2, '0'); };
+const dmy = d => { const p = zp(d); return T === L.th ? p.d + ' ' + T.months[p.mo - 1] : T.months[p.mo - 1] + ' ' + p.d; };
+function dueText(iso) {
+  const d = new Date(iso), now = new Date(), diff = d - now;
+  if (diff < 0) { const h = Math.round(-diff / 3600000); return h < 1 ? T.overdue : h < 48 ? T.overH(h) : T.overD(Math.round(h / 24)); }
+  const p = zp(d), dd = dayNo(p) - dayNo(zp(now));
+  if (dd === 0) return T.today + ' ' + hm(d);
+  if (dd === 1) return T.tomorrow + ' ' + hm(d);
+  if (dd < 7) return T.days[p.wd] + ' ' + hm(d);
+  return dmy(d) + (p.h || p.mi ? ' ' + hm(d) : '');
+}
+const fmtAt = iso => { const d = new Date(iso); return dmy(d) + ' ' + hm(d); };
+
+function tabs() {
+  const open = S.data.items.filter(x => !x.doneAt);
+  const over = open.some(x => x.due && new Date(x.due) < new Date());
+  const names = [T.recent, T.byProj, `${T.todo} <span class="cnt${over ? ' red' : ''}">${open.length}</span>`];
+  return `<div class="tabs">${names.map((n, i) => `<div class="tab${i === S.tab ? ' on' : ''}" data-a="tab" data-i="${i}">${n}</div>`).join('')}</div>`;
+}
+function shownIds() {
+  const vis = S.data.sessions.filter(s => !S.hidden.includes(norm(s.cwd)));
+  const ids = new Set(vis.slice(0, 10).map(s => s.id)); const seen = {};
+  vis.forEach(s => { seen[s.cwd] = (seen[s.cwd] || 0) + 1; if (seen[s.cwd] <= 3) ids.add(s.id); });
+  return ids;
+}
+function head() {
+  const ss = S.data.sessions, ids = shownIds();
+  const live = ss.filter(s => s.live).length, pend = ss.filter(s => ids.has(s.id) && !s.live && !s.closed).length;
+  return `<div class="hd"><span class="logo">C</span><span class="ttl">cc-remind</span>
+  <span class="sum"><span><span class="dot live"></span> <b>${live}</b> ${T.live}</span><span><span class="dot pend"></span> <b>${pend}</b> ${T.pend}</span></span>
+  <button class="ib" data-a="refresh" title="${esc(T.refresh)}">↻</button><button class="ib" data-a="hide" title="${esc(T.hideWin)}">✕</button></div>`;
+}
+function row(s, showProj) {
+  const k = st(s);
+  return `<div class="row ${k}" data-a="open" data-id="${esc(s.id)}"><span class="dot ${k}"></span><div class="m"><div class="t">${esc(s.title || T.noTitle)}</div>
+  <div class="s">${showProj ? `<span class="pj">${esc(leaf(s.cwd))}</span> · ` : ''}${ago(s.mtime)}${s.compacts ? `<span class="cmp">compact ${s.compacts}</span>` : ''}</div></div><span class="act">${k === 'live' ? T.sw : T.resume}</span></div>`;
+}
+function recent() {
+  const ss = S.data.sessions.filter(s => !S.hidden.includes(norm(s.cwd))).slice(0, 10);
+  return `<div class="list">${ss.map(s => row(s, true)).join('') || `<div class="empty">${T.noHistory}</div>`}</div>`;
+}
+function byProject() {
+  const groups = new Map();
+  S.data.sessions.forEach(s => { const k = norm(s.cwd); if (!groups.has(k)) groups.set(k, { cwd: s.cwd, ss: [] }); groups.get(k).ss.push(s); });
+  const open = S.data.items.filter(x => !x.doneAt);
+  const html = [...groups.entries()].filter(([k]) => S.showHidden || !S.hidden.includes(k)).map(([k, g]) => {
+    const top = g.ss.slice(0, 3);
+    const nl = top.filter(s => s.live).length, np = top.filter(s => !s.live && !s.closed).length;
+    const nt = open.filter(x => norm(x.to) === k || (!x.to && x.from && norm(x.from.cwd) === k)).length;
+    const isOpen = k in S.open ? S.open[k] : nl > 0;
+    const hidden = S.hidden.includes(k);
+    const badges = (nl ? `<span class="bd"><span class="dot live"></span>${nl}</span>` : '') + (np ? `<span class="bd"><span class="dot pend"></span>${np}</span>` : '') + (nt ? `<span class="bd" title="${esc(T.flagged)}">⚑ ${nt}</span>` : '');
+    return `<div class="grp${isOpen ? ' open' : ''}"><div class="gh" data-a="grp" data-k="${esc(k)}"><span class="chev">›</span><span class="n" title="${esc(g.cwd)}"${hidden ? ' style="color:var(--dim)"' : ''}>${esc(leaf(g.cwd))}</span>${badges}
+    <span class="c when">${ago(g.ss[0].mtime)}</span><span class="sp"></span>
+    <button class="ib hide" data-a="${hidden ? 'unhide' : 'hideproj'}" data-k="${esc(k)}" title="${esc(hidden ? T.unhide : T.hideProj)}">${hidden ? '↺' : '⊘'}</button><button class="nb" data-a="new" data-cwd="${esc(g.cwd)}">${T.newChat}</button></div>
+    <div class="body">${top.map(s => row(s, false)).join('')}</div></div>`;
+  }).join('');
+  const nh = S.hidden.length;
+  return `<div class="list">${html || `<div class="empty">${T.noHistory}</div>`}${nh ? `<div class="link" data-a="showhidden">${S.showHidden ? T.hideHidden : T.showHidden(nh)}</div>` : ''}</div>`;
+}
+const PR = { hi: 0, mid: 1, lo: 2 };
+function sortItems(a, b) {
+  const now = Date.now();
+  const oa = a.due && Date.parse(a.due) < now, ob = b.due && Date.parse(b.due) < now;
+  if (oa !== ob) return oa ? -1 : 1;
+  if (a.due && b.due) return a.due.localeCompare(b.due);
+  if (!!a.due !== !!b.due) return a.due ? -1 : 1;
+  if (PR[a.pr] !== PR[b.pr]) return PR[a.pr] - PR[b.pr];
+  return b.createdAt.localeCompare(a.createdAt);
+}
+function srcLabel(x) { return x.from ? (x.from.cwd ? leaf(x.from.cwd) : x.from.label || '') : ''; }
+function todoRow(x) {
+  const now = Date.now(), over = x.due && Date.parse(x.due) < now;
+  const chips = (x.to ? `<span class="chip to">→ ${esc(leaf(x.to))}</span>` : '')
+    + (x.due ? `<span class="chip ${over ? 'over' : 'due'}">⏰ ${esc(dueText(x.due))}</span>` : '')
+    + (x.orphan ? `<span class="chip warn">${esc(T.orphan)}</span>` : '')
+    + (x.stale ? `<span class="chip warn">${esc(T.stale)}</span>` : '');
+  const src = `<span class="pj">${esc(srcLabel(x))}</span>${x.fromTitle ? ' · ' + esc(x.fromTitle) : ''}`;
+  const ex = S.expanded === x.id;
+  return `<div class="td pr-${esc(x.pr)}${over ? ' isover' : ''}" data-a="exp" data-id="${esc(x.id)}"><span class="cb" data-a="done" data-id="${esc(x.id)}" title="${esc(T.markDone)}"></span><div class="m">
+    <div class="t2">${esc(x.title)}</div><div class="s">${chips}${src} · ${esc(fmtAt(x.createdAt))}</div></div>
+    <span class="act">${ex ? '' : T.det}</span>${ex ? detail(x) : ''}</div>`;
+}
+function detail(x) {
+  const canOpen = x.from && x.from.sessionId;
+  return `<div class="det" data-a="noop">${x.note ? `<div class="note">${esc(x.note)}</div>` : ''}
+    <div class="meta">${T.from}: ${esc(x.from && x.from.cwd ? x.from.cwd : srcLabel(x))}${x.fromTitle ? `<br>${T.chat}: ` + esc(x.fromTitle) : ''}<br>${T.added}: ${esc(fmtAt(x.createdAt))}${x.due ? `<br>${T.due}: ` + esc(fmtAt(x.due)) : ''}${x.to ? `<br>${T.to}: ` + esc(x.to) : ''}${x.ref ? `<br>${T.ref}: ` + esc(x.ref) : ''}<br>${T.id}: ${esc(x.id)}</div>
+    <div class="btns">${canOpen ? `<button data-a="opensrc" data-id="${esc(x.id)}">${T.openSrc}</button>` : ''}${x.to ? `<button data-a="new" data-cwd="${esc(x.to)}">${esc(T.newIn(leaf(x.to)))}</button>` : ''}
+    <button data-a="snooze" data-id="${esc(x.id)}" data-v="+1h">${T.snooze1h}</button><button data-a="snooze" data-id="${esc(x.id)}" data-v="tomorrow9">${T.snoozeTmr}</button>
+    ${x.stale ? `<button data-a="confirm" data-id="${esc(x.id)}">${T.stillValid}</button>` : ''}<button data-a="done" data-id="${esc(x.id)}">${T.markDone}</button><button data-a="drop" data-id="${esc(x.id)}">${T.drop}</button></div></div>`;
+}
+function todos() {
+  const all = S.data.items;
+  const open = all.filter(x => !x.doneAt).sort(sortItems);
+  const me = open.filter(x => !x.to), fw = open.filter(x => x.to);
+  const shown = [open, me, fw][S.filter];
+  const done = all.filter(x => x.doneAt).sort((a, b) => b.doneAt.localeCompare(a.doneAt));
+  const fl = [`${T.all} ${open.length}`, `${T.me} ${me.length}`, `${T.fwd} ${fw.length}`];
+  const doneHtml = done.map(x => `<div class="td done"><span class="cb on" data-a="reopen" data-id="${esc(x.id)}" title="${esc(T.reopen)}">✓</span><div class="m"><div class="t2">${esc(x.title)}</div>
+    <div class="s">${x.dropped ? T.dropped : x.doneBy ? T.closedBy + esc(leaf(x.doneBy.cwd)) + (x.doneBy.title ? ' · ' + esc(x.doneBy.title) : '') : T.byYou} · ${esc(fmtAt(x.doneAt))}${x.doneNote ? ' — ' + esc(x.doneNote) : ''}</div></div></div>`).join('');
+  return `<div class="flt">${fl.map((t, i) => `<span class="${i === S.filter ? 'on' : ''}" data-a="filter" data-i="${i}">${t}</span>`).join('')}</div>
+  <div class="list">${shown.map(todoRow).join('') || `<div class="empty">${T.nothing}</div>`}
+  ${done.length ? `<div class="grp${S.doneOpen ? ' open' : ''}"><div class="gh" data-a="doneopen"><span class="chev">›</span><span class="n" style="color:var(--mut)">${T.doneH}</span><span class="c when">${T.doneCount(done.length)}</span></div><div class="body">${doneHtml}</div></div>` : ''}</div>`;
+}
+function dialog() {
+  const d = S.dialog;
+  const base = roots()[d.cat] ? roots()[d.cat].path : '';
+  const bad = /[\\/:*?"<>|]/.test(d.name) || !d.name.trim() || !base;
+  return `<div class="ov"><div class="dlg"><h3>${T.newProjT}</h3>
+  <div class="lb">${T.projName}</div><input class="in" id="pname" value="${esc(d.name)}" placeholder="${esc(T.example)}">
+  <div class="lb">${T.folder}</div><div class="seg">${roots().map((c, i) => `<span class="${i === d.cat ? 'on' : ''}" data-a="cat" data-i="${i}">${esc(c.label)}</span>`).join('')}</div>
+  <div class="path">${esc(base + sep(base) + (d.name.trim() || '…'))}</div>
+  ${d.err ? `<div class="err">${esc(d.err)}</div>` : ''}
+  <div class="dbtn"><button class="b2" data-a="cancel">${T.cancel}</button><button class="b1" data-a="create"${bad || d.busy ? ' disabled' : ''}>${T.create}</button></div></div></div>`;
+}
+function render() {
+  T = L[S.data.language] || L.en;
+  document.documentElement.lang = S.data.language === 'th' ? 'th' : 'en';
+  const app = document.getElementById('app');
+  const sc = app.querySelector('.list'); const top = sc ? sc.scrollTop : 0;
+  const body = [recent, byProject, todos][S.tab]();
+  const html = head() + tabs() + body + (roots().length ? `<div class="ft"><button class="pb" data-a="newproj">${T.newProj}</button></div>` : '')
+    + (S.msg ? `<div class="msg">${esc(S.msg)}</div>` : '') + (S.dialog ? dialog() : '');
+  app.replaceChildren(document.createRange().createContextualFragment(html));
+  const sc2 = app.querySelector('.list'); if (sc2) sc2.scrollTop = top;
+  if (S.dialog) { const i = document.getElementById('pname'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+}
+function flash(t) { S.msg = t; render(); clearTimeout(flash.h); flash.h = setTimeout(() => { S.msg = null; render(); }, 3500); }
+const sessionById = id => S.data.sessions.find(s => s.id === id);
+function openSession(s) { if (s) send({ cmd: 'open', id: s.id, cwd: s.cwd, live: s.live, pid: s.pid || 0, title: s.title || '' }); }
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-a]'); if (!el) return;
+  const a = el.dataset.a, id = el.dataset.id;
+  if (a === 'noop') return;
+  e.stopPropagation();
+  switch (a) {
+    case 'tab': S.tab = +el.dataset.i; save('tab', S.tab); break;
+    case 'filter': S.filter = +el.dataset.i; save('filter', S.filter); break;
+    case 'refresh': send({ cmd: 'refresh' }); return;
+    case 'hide': send({ cmd: 'hide' }); return;
+    case 'open': openSession(sessionById(id)); return;
+    case 'grp': { const k = el.dataset.k; const g = el.parentElement; S.open[k] = !g.classList.contains('open'); save('open', S.open); break; }
+    case 'hideproj': S.hidden.push(el.dataset.k); save('hidden', S.hidden); break;
+    case 'unhide': S.hidden = S.hidden.filter(k => k !== el.dataset.k); save('hidden', S.hidden); break;
+    case 'showhidden': S.showHidden = !S.showHidden; break;
+    case 'new': send({ cmd: 'new', cwd: el.dataset.cwd }); return;
+    case 'exp': S.expanded = S.expanded === id ? null : id; break;
+    case 'done': send({ cmd: 'todo', op: 'done', id }); S.expanded = null; return;
+    case 'drop': send({ cmd: 'todo', op: 'drop', id }); S.expanded = null; return;
+    case 'reopen': send({ cmd: 'todo', op: 'reopen', id }); return;
+    case 'snooze': send({ cmd: 'todo', op: 'snooze', id, v: el.dataset.v }); return;
+    case 'confirm': send({ cmd: 'todo', op: 'confirm', id }); return;
+    case 'opensrc': { const x = S.data.items.find(i => i.id === id); const s = sessionById(x.from.sessionId); openSession(s || { id: x.from.sessionId, cwd: x.from.cwd, live: false }); return; }
+    case 'doneopen': S.doneOpen = !S.doneOpen; break;
+    case 'newproj': S.dialog = { name: '', cat: 0, err: null, busy: false }; break;
+    case 'cat': S.dialog.cat = +el.dataset.i; break;
+    case 'cancel': S.dialog = null; break;
+    case 'create': S.dialog.busy = true; send({ cmd: 'create', name: S.dialog.name.trim(), root: S.dialog.cat }); break;
+  }
+  render();
+});
+document.addEventListener('input', e => { if (e.target.id === 'pname') { S.dialog.name = e.target.value; S.dialog.err = null; const pos = e.target.selectionStart; render(); const i = document.getElementById('pname'); i.setSelectionRange(pos, pos); } });
+document.addEventListener('keydown', e => {
+  if (!S.dialog) return;
+  if (e.key === 'Escape') { S.dialog = null; render(); }
+  if (e.key === 'Enter') { const b = document.querySelector('[data-a="create"]'); if (b && !b.disabled) b.click(); }
+});
+if (host) host.addEventListener('message', e => {
+  const m = e.data;
+  if (m.type === 'data') { S.data = m.payload; if (!S.dialog || !S.dialog.busy) render(); }
+  else if (m.type === 'created') { S.dialog = null; flash(T.created); }
+  else if (m.type === 'createError') { if (S.dialog) { S.dialog.err = m.text; S.dialog.busy = false; } render(); }
+  else if (m.type === 'msg') flash(m.text);
+});
+setInterval(() => { if (!S.dialog) render(); }, 60000);
+render();
+send({ cmd: 'ready' });
+</script>
+</body>
+</html>

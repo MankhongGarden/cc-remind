@@ -1,0 +1,10 @@
+{
+  "model": "sonnet",
+  "maxTurns": 60,
+  "parallel": 4,
+  "timeoutMinutes": 25,
+  "claudePath": "",
+  "projects": [
+    { "name": "example-project", "cwd": "C:\\path\\to\\example-project" }
+  ]
+}
