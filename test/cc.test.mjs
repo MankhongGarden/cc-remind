@@ -121,3 +121,36 @@ test('--to resolves a folder path and the item shows up there', () => {
     assert.match(r.err, /unknown project/);
   } finally { s.cleanup(); }
 });
+
+test('ignorePaths hides sessions by folder name or by path, including subfolders', () => {
+  const s = sandbox();
+  try {
+    const claude = path.join(s.root, 'claude', 'projects');
+    const session = (dir, id, cwd) => {
+      fs.mkdirSync(path.join(claude, dir), { recursive: true });
+      fs.writeFileSync(path.join(claude, dir, id + '.jsonl'), JSON.stringify({ type: 'user', cwd, message: { role: 'user', content: 'hello there' } }) + '\n');
+    };
+    const base = path.join(path.parse(s.root).root, 'cc-remind-fake-root');
+    const bot = path.join(base, 'tools', 'my-bot');
+    const scratch = path.join(base, 'scratch');
+    session('p1', 'keep', path.join(base, 'app'));
+    session('p2', 'byname', path.join(bot, 'state'));
+    session('p3', 'bypath', path.join(scratch, 'deep'));
+    session('p4', 'similar', path.join(base, 'my-bot-docs'));
+    const ids = () => JSON.parse(s.run(['scan']).out).sessions.map(x => x.id).sort();
+    assert.deepEqual(ids(), ['byname', 'bypath', 'keep', 'similar']);
+    fs.writeFileSync(path.join(s.data, 'config.json'), JSON.stringify({ ignorePaths: ['MY-BOT', scratch.replace(/\\/g, '/') + '/'] }));
+    assert.deepEqual(ids(), ['keep', 'similar']);
+    const r = s.run(['add', 'x', '--to', 'deep']);
+    assert.equal(r.code, 1);
+    assert.match(r.err, /unknown project/);
+  } finally { s.cleanup(); }
+});
+
+test('--version prints the package version', () => {
+  const s = sandbox();
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(path.dirname(CLI), 'package.json'), 'utf8'));
+    assert.equal(s.run(['--version']).out.trim(), pkg.version);
+  } finally { s.cleanup(); }
+});

@@ -4,7 +4,7 @@
 Notes addressed to a *project* wait until the next session opens there. Notes addressed to *you* raise a desktop notification when they fall due. Whoever closes an item is recorded.
 
 > [!WARNING]
-> **Experimental.** Built and used daily by one person on one Windows 11 machine since 2026-09-30. Tested on Claude Code 2.1.295, Node.js 22, PowerShell 7.6 and Windows PowerShell 5.1 (2026-10-09). It reads some Claude Code files whose format is not documented (see [Relies on undocumented Claude Code files](#relies-on-undocumented-claude-code-files)), so expect breakage after Claude Code updates. Not published to npm.
+> **Experimental.** Built and used daily by one person on one Windows 11 machine since 2026-09-30. Last tested on Claude Code 2.1.308, Node.js 22 and Windows PowerShell 5.1 (2026-10-22; first release tested on 2.1.295). It reads some Claude Code files whose format is not documented (see [Relies on undocumented Claude Code files](#relies-on-undocumented-claude-code-files)), so expect breakage after Claude Code updates. Not published to npm.
 
 ![The inbox tab of the widget](docs/widget-inbox.png)
 
@@ -12,7 +12,7 @@ Notes addressed to a *project* wait until the next session opens there. Notes ad
 - If you run several Claude Code projects in parallel, sessions regularly end with something that is not their own job: a decision only you can make, a result to check tomorrow, or a fact that a *different* project's session needs to know.
 - Claude Code's own [cross-session messaging](https://code.claude.com/docs/en/cross-session-messaging) is **live**: on one machine it delivers only to sessions that are running now. These handoffs are usually for a project that has no session open, possibly for days.
 - `cc-remind` is a single-file Node CLI with no dependencies, plus a `SessionStart` hook. Items are addressed to a project folder or to "me". The hook shows a project its open items when any session starts there. The agent closes an item with a one-line note when it finishes the work.
-- The optional widget lists recent sessions, resumes any of them in Windows Terminal, and shows the inbox with due-time notifications.
+- The optional widget lists recent sessions, resumes any of them in Windows Terminal, and shows the inbox with due-time notifications. It asks WebView2 to use less memory while it is hidden or covered by another window.
 - Bonus: a script that forks each project's latest conversation headless (`--resume <id> --fork-session`) and asks it, read-only, which of its own open items are already done.
 
 ---
@@ -139,6 +139,7 @@ The CLI and hook are plain Node and also run on macOS and Linux (data in `~/.loc
 | `launchCommand` | `claude` | Command the widget runs for "resume" and "new chat" |
 | `resumeArgs` | `[]` | Extra arguments added when resuming, e.g. `["--model", "opus"]` |
 | `closeSkills` | `[]` | Names of your own wrap-up skills or slash commands that mark a session as finished (`/compact` always does) |
+| `ignorePaths` | `[]` | Folders whose sessions are left out of the session list and of `--to` name matching, e.g. bots or scripts that run Claude Code headless. A plain name (`"my-bot"`) matches that folder name anywhere in the path; an entry with a slash (`"C:/tools/scratch"`) matches that folder and everything under it. System temp folders are always left out |
 | `projectRoots` | `[]` | `[{ "label": "Projects", "path": "C:\\code" }]` enables the widget's "New project" button for these folders |
 
 The data folder itself is set with the `CC_REMIND_DATA` environment variable.
@@ -175,7 +176,7 @@ This needs only the documented `--resume`, `--fork-session` and `-p` flags, so t
 
 ### Relies on undocumented Claude Code files
 
-The scanner reads `<config>/projects/*/*.jsonl` transcripts, matching on internal record shapes (`"type":"ai-title"`, `"subtype":"compact_boundary"`, the first user message). It also reads `<config>/sessions/<pid>.json` to tell which sessions are live. **Neither format is a public API.** Both still parsed on Claude Code 2.1.295 (2026-10-09), but an update can break the widget's session list, titles and "live" dots without any error. Reminders themselves (`add`, `done`, `list`, the hook) do not depend on these files, except that `--to <short name>` uses the scanned project list (a folder path always works).
+The scanner reads `<config>/projects/*/*.jsonl` transcripts, matching on internal record shapes (`"type":"ai-title"`, `"subtype":"compact_boundary"`, the first user message). It also reads `<config>/sessions/<pid>.json` to tell which sessions are live. **Neither format is a public API.** Both still parsed on Claude Code 2.1.308 (2026-10-22), but an update can break the widget's session list, titles and "live" dots without any error. Reminders themselves (`add`, `done`, `list`, the hook) do not depend on these files, except that `--to <short name>` uses the scanned project list (a folder path always works).
 
 ### Other limits
 
@@ -184,6 +185,7 @@ The scanner reads `<config>/projects/*/*.jsonl` transcripts, matching on interna
 - **Single machine, single user.** It uses a local JSON file and a lock file, with no sync. Don't put the data folder in a cloud-synced folder that another machine writes to.
 - **Windows-only widget.** It uses WinForms + WebView2 from PowerShell, Windows Terminal for resume, and UI Automation to pick the right terminal tab.
 - **The fork-session review uses quota.** Each `claude -p` run is a full agent session. Pin a smaller model and cap `--max-turns`.
+- **Memory trim needs a recent WebView2 Runtime.** While the widget is hidden or another app is in front, it sets WebView2's memory target to `Low` and back to `Normal` when you are on the desktop or using the widget. On a runtime without that setting it logs one line and carries on.
 - **The widget re-scans every 20 seconds.** With the byte-offset cache this is cheap after the first run. The first scan reads every transcript once.
 - A note or title cannot start with `--` (it would be read as a flag); put `--` before it, e.g. `cc-remind add -- "--force was needed"`.
 
@@ -196,6 +198,15 @@ npm test            # node --test, uses a temporary data folder
 ```
 
 `widget.ps1 -Test -ShotFile <file> -ShotDir <dir>` runs the widget headless-ish, executes one line of JavaScript from the file per step, and saves a PNG after each.
+
+## Changes
+
+**0.2.0 (2026-10-22)**
+- `ignorePaths` in `config.json` hides sessions from chosen folders (headless bots, scratch folders) in the widget and in `--to` name matching.
+- The widget lowers WebView2's memory target while it is hidden or covered, and restores it on the desktop or when focused.
+- Skill: clearer rules for notes to other projects and self follow-ups, plus Windows/PowerShell quoting and auto-mode pitfalls.
+
+**0.1.0 (2026-10-09)** - first public release.
 
 ## License
 

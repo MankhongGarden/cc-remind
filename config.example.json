@@ -5,5 +5,6 @@
   "launchCommand": "claude",
   "resumeArgs": [],
   "closeSkills": [],
+  "ignorePaths": [],
   "projectRoots": []
 }

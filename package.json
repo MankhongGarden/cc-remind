@@ -1,6 +1,6 @@
 {
   "name": "cc-remind",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "A durable reminder inbox shared by every Claude Code session on your machine, with a Windows desktop widget.",
   "type": "module",

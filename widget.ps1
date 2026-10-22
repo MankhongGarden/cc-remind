@@ -347,15 +347,23 @@ $tick.Start()
 
 $HWND_TOPMOST = [IntPtr](-1); $HWND_NOTOPMOST = [IntPtr](-2)
 $SWP = 0x0001 -bor 0x0002 -bor 0x0010
+$script:MemLow = $null; $script:MemOff = $false
+function Set-WvMemory([bool]$low) {
+  if (-not $script:Ready -or $script:MemOff -or $script:MemLow -eq $low) { return }
+  try { $wv.CoreWebView2.MemoryUsageTargetLevel = $(if ($low) { 'Low' } else { 'Normal' }) } catch { Log ("memory target not supported: " + $_.Exception.Message); $script:MemOff = $true; return }
+  $script:MemLow = $low
+  Log "webview memory $(if ($low) { 'Low' } else { 'Normal' })"
+}
 $desk = New-Object Windows.Forms.Timer; $desk.Interval = 250
 $desk.add_Tick({ Safe {
-  if (-not $form.Visible) { return }
+  if (-not $form.Visible) { Set-WvMemory $true; return }
   $h = $form.Handle
   if ([CcWin]::IsIconic($h)) { [void][CcWin]::ShowWindow($h, 4) }
   $fg = [CcWin]::GetForegroundWindow()
   if ($fg -eq [IntPtr]::Zero) { return }
   $cls = [CcWin]::Cls($fg)
   $isDesk = ($cls -eq 'WorkerW' -or $cls -eq 'Progman')
+  Set-WvMemory (-not ($isDesk -or $fg -eq $h -or [CcWin]::GetAncestor($fg, 2) -eq $h))
   if ($isDesk -and -not $script:Pinned) {
     [void][CcWin]::SetWindowPos($h, $HWND_TOPMOST, 0, 0, 0, 0, $SWP -bor 0x0040); $script:Pinned = $true
   } elseif (-not $isDesk -and $script:Pinned -and $fg -ne $h -and [CcWin]::GetAncestor($fg, 2) -ne $h) {

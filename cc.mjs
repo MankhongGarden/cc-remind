@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const IS_WIN = process.platform === 'win32';
 
 const readJson = (f, d) => {
@@ -28,6 +28,7 @@ const JUNK = /[\\/](Windows|AppData|Temp)([\\/]|$)|^[A-Z]:[\\/]temp$|^\/(tmp|var
 const STALE_DAYS = 14;
 const HOOK_CAP = 8;
 const CLOSE_SKILLS = Array.isArray(CFG.closeSkills) ? CFG.closeSkills.filter(s => typeof s === 'string' && s) : [];
+const IGNORE = Array.isArray(CFG.ignorePaths) ? CFG.ignorePaths.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim()) : [];
 const LANG = ['en', 'th'].includes(process.env.CC_REMIND_LANG || CFG.language) ? (process.env.CC_REMIND_LANG || CFG.language) : 'en';
 
 const TZ = (() => {
@@ -57,6 +58,12 @@ const writeJson = (f, v) => { const t = f + '.' + process.pid + '.tmp'; fs.write
 const norm = p => (p || '').replace(/[\\/]+$/, '').toLowerCase();
 const leaf = p => (p || '').replace(/[\\/]+$/, '').split(/[\\/]/).pop();
 const under = (child, parent) => child === parent || child.startsWith(parent + '\\') || child.startsWith(parent + '/');
+const ignored = cwd => {
+  if (JUNK.test(cwd)) return true;
+  const fwd = p => norm(p).replace(/\\/g, '/');
+  const c = fwd(cwd);
+  return IGNORE.some(p => /[\\/]/.test(p) ? under(c, fwd(p)) : c.split('/').includes(p.toLowerCase()));
+};
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 
 function withLock(fn) {
@@ -147,7 +154,7 @@ function scanSessions() {
       let st;
       try { st = scanFile(file, cache[file]); } catch { continue; }
       next[file] = st;
-      if (!st.cwd || JUNK.test(st.cwd)) continue;
+      if (!st.cwd || ignored(st.cwd)) continue;
       out.push({ id: f.slice(0, -6), cwd: st.cwd, title: st.title || st.first || '', compacts: st.compacts, closed: st.closed, mtime: new Date(st.mtime).toISOString() });
     }
   }
@@ -161,7 +168,7 @@ function scanSessions() {
 function knownProjects() {
   const c = readJson(CACHE, {});
   const m = new Map();
-  for (const st of Object.values(c)) if (st.cwd && !JUNK.test(st.cwd)) m.set(norm(st.cwd), st.cwd);
+  for (const st of Object.values(c)) if (st.cwd && !ignored(st.cwd)) m.set(norm(st.cwd), st.cwd);
   return [...m.values()];
 }
 
